@@ -10,3 +10,9 @@ tether = "tether.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["tether"]
+
+[tool.setuptools.package-data]
+tether = ["report_template.html"]

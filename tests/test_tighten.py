@@ -54,3 +54,9 @@ def test_root_only_unused_grant_keeps_nonroot_grant():
     obs = parse("allow app_t self:ability { nonroot spawn };\nallow app_t self:ability { spawn };")
     p = extract(obs, "app_t", parse("allow app_t self:ability { spawn };"))
     assert [r.flags for r in p.rules] == [["nonroot"]] and "spawn" in p.abilities_of("app_t")
+
+
+def test_extract_drops_other_types_link_rules():
+    obs = parse("type app_t, logd_t;\nallow app_t logd_t:channel connect;\nallow_link logd_t /var/log;\nallow_link app_t /tmp/x;")
+    out = extract(obs, "app_t").render()
+    assert "allow_link app_t /tmp/x;" in out and "allow_link logd_t" not in out

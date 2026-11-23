@@ -67,7 +67,8 @@ def extract(observed: Policy, app_type: str, unused: Policy | None = None) -> Po
     types = [t for t in observed.types if t in needed]
     types += [t for t in dict.fromkeys(needed) if t not in types]
     foreign = set(observed.types) - set(types)
-    other = [o for o in observed.other if not foreign & set(re.findall(r"\w+", o))]
+    other = [o for o in observed.other if not foreign & set(re.findall(r"\w+", o))
+             and not (o.startswith("allow") and o.split()[1:2] != [app_type])]
     return Policy(types=types, rules=rules, other=other)
 
 

@@ -33,7 +33,8 @@ def _subtract(rule, unused: list):
     if isinstance(rule, AttachRule):
         return None if any(isinstance(u, AttachRule) and u.render() == rule.render()
                            for u in unused) else rule
-    same = [u for u in unused if type(u) is type(rule) and u.target == rule.target]
+    same = [u for u in unused if type(u) is type(rule) and u.target == rule.target
+            and sorted(getattr(u, "flags", [])) == sorted(getattr(rule, "flags", []))]
     if isinstance(rule, ClassRule):
         gone = {p for u in same if u.klass == rule.klass for p in u.perms}
         perms = [p for p in rule.perms if p not in gone]

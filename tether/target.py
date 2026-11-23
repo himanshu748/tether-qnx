@@ -5,6 +5,7 @@ separate from execution so it can be inspected and tested on the host.
 """
 from __future__ import annotations
 
+import os
 import shlex
 import subprocess
 from dataclasses import dataclass
@@ -22,18 +23,22 @@ class Target:
     user: str = "root"
     identity: str | None = None
     timeout: int = 60
+    known_hosts: str = "~/.config/tether/known_hosts"
+
+    def _host_opts(self) -> list[str]:
+        kh = os.path.expanduser(self.known_hosts)
+        os.makedirs(os.path.dirname(kh), exist_ok=True)
+        return ["-o", "StrictHostKeyChecking=accept-new", "-o", f"UserKnownHostsFile={kh}"]
 
     def ssh_argv(self, command: str) -> list[str]:
-        argv = ["ssh", "-p", str(self.port), "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",
+        argv = ["ssh", "-p", str(self.port), *self._host_opts(), "-o", "LogLevel=ERROR",
                 "-o", f"ConnectTimeout={self.timeout}"]
         if self.identity:
             argv += ["-i", self.identity]
         return argv + [f"{self.user}@{self.host}", command]
 
     def scp_argv(self, local: str, remote: str) -> list[str]:
-        argv = ["scp", "-P", str(self.port), "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR"]
+        argv = ["scp", "-P", str(self.port), *self._host_opts(), "-o", "LogLevel=ERROR"]
         if self.identity:
             argv += ["-i", self.identity]
         return argv + [local, f"{self.user}@{self.host}:{remote}"]

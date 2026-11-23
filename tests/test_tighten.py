@@ -30,3 +30,21 @@ def test_grants_rank_unbounded_dangerous_first():
 def test_denied_lists_withheld_root_abilities():
     p = extract(OBSERVED, "app_t")
     assert denied(["spawn", "setuid", "io"], p, "app_t") == ["io", "spawn"]
+
+
+def test_extract_subtracts_single_unused_grant_from_grouped_rule():
+    unused = parse("allow app_t self:ability { public_channel };")
+    p = extract(OBSERVED, "app_t", unused)
+    held = p.abilities_of("app_t")
+    assert "public_channel" not in held and {"setuid", "channel_connect"} <= set(held)
+
+
+def test_extract_keeps_declarations_and_undeclared_types():
+    obs = parse("""
+range cal_r 0x10 0x20;
+allow app_t base_t:channel connect;
+allow app_t self:ability { settypeid:cal_r };
+""")
+    out = extract(obs, "app_t").render()
+    assert "type app_t;" in out and "type base_t;" in out
+    assert "range cal_r" in out

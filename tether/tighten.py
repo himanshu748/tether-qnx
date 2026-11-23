@@ -72,6 +72,14 @@ def extract(observed: Policy, app_type: str, unused: Policy | None = None) -> Po
     return Policy(types=types, rules=rules, other=other)
 
 
+def narrow(observed: Policy, app_type: str, unused: Policy | None = None) -> Policy:
+    """The whole observed system policy with app_type's rules replaced by its
+    least-privilege set, so it can be compiled and booted as-is."""
+    rules = [r for r in observed.rules if r.subject != app_type]
+    rules += extract(observed, app_type, unused).rules
+    return Policy(types=list(observed.types), rules=rules, other=list(observed.other))
+
+
 def grants(policy: Policy, app_type: str) -> list[Grant]:
     out: list[Grant] = []
     for r in policy.rules_for(app_type):

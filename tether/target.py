@@ -10,7 +10,6 @@ import shlex
 import subprocess
 from dataclasses import dataclass
 
-STATE_FILE = "/var/tether.state"
 POLICY_DEV = "/dev/secpolgenerate/policy"
 UNUSED_DEV = "/dev/secpolgenerate/unused"
 ERRORS_DEV = "/dev/secpolgenerate/errors"
@@ -55,24 +54,7 @@ class Target:
         return self.run(f"cat {shlex.quote(path)}", check=False).stdout
 
 
-def observe_cmd(state_file: str = STATE_FILE) -> str:
-    """Start secpolgenerate from scratch, logging errors, saving state."""
-    return f"secpolgenerate -N -n -l -f 1 -s {shlex.quote(state_file)} &"
-
-
 def launch_cmd(binary: str, type_name: str, args: str = "") -> str:
     """Run the application under its own security type so its use of privilege is
     attributed to that type rather than to the shell's."""
-    return f"secpollaunch -t {shlex.quote(type_name)} {shlex.quote(binary)} {args}".strip()
-
-
-def push_cmd(policy_bin: str) -> str:
-    return f"secpolpush {shlex.quote(policy_bin)}"
-
-
-def compile_cmd(source: str, out: str) -> str:
-    return f"secpolcompile -o {shlex.quote(out)} {shlex.quote(source)}"
-
-
-def stop_cmd() -> str:
-    return "slay -f -S SIGTERM secpolgenerate"
+    return f"on -T {shlex.quote(type_name)} {shlex.quote(binary)} {args}".strip()

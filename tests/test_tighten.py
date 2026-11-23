@@ -1,5 +1,5 @@
 from tether.secpol import parse
-from tether.tighten import denied, extract, grants
+from tether.tighten import denied, extract, grants, narrow
 
 OBSERVED = parse("""
 type app_t, logd_t, other_t, sock_t;
@@ -60,3 +60,10 @@ def test_extract_drops_other_types_link_rules():
     obs = parse("type app_t, logd_t;\nallow app_t logd_t:channel connect;\nallow_link logd_t /var/log;\nallow_link app_t /tmp/x;")
     out = extract(obs, "app_t").render()
     assert "allow_link app_t /tmp/x;" in out and "allow_link logd_t" not in out
+
+
+def test_narrow_keeps_other_types_and_tightens_app():
+    p = narrow(OBSERVED, "app_t", UNUSED)
+    assert p.types == OBSERVED.types
+    assert "prot_exec" not in p.abilities_of("app_t")
+    assert p.abilities_of("other_t") == {"io": [], "mem_phys": []}

@@ -58,7 +58,7 @@ footer{padding:12vh 24px 48px;color:var(--mute);font-size:14px;display:flex;just
     <div class="eyebrow">QNX OS 8.0 · Developer tooling</div>
     <h1>Give every QNX process <em>only what it uses.</em></h1>
     <p class="lede">Tether runs your app on QNX, records the abilities, channels and paths it really touches, writes the smallest security policy that fits, then attacks the app to prove the policy holds.</p>
-    <div class="cta"><a class="btn p" href="#how">How it works</a><a class="btn s" href="https://github.com/himanshu748/tether-qnx#use">Try the CLI</a></div>
+    <div class="cta"><a class="btn p" href="report.html">See a real run</a><a class="btn s" href="https://github.com/himanshu748/tether-qnx#use">Try the CLI</a></div>
   </div>
   <div class="term reveal"><div class="bar"><b></b><b></b><b></b></div><pre id="tty"></pre></div>
 
@@ -68,8 +68,8 @@ footer{padding:12vh 24px 48px;color:var(--mute);font-size:14px;display:flex;just
     <div class="steps">
       <div class="step"><h3>Observe</h3><p>The app runs its normal workload under <code>secpolgenerate</code>.</p></div>
       <div class="step"><h3>Tighten</h3><p>Tether keeps one type's rules, drops what went unused and ranks each grant by risk.</p></div>
-      <div class="step"><h3>Enforce</h3><p><code>secpolcompile</code> and <code>secpolpush</code> load it on the target.</p></div>
-      <div class="step"><h3>Attack</h3><p>An injected exploit runs against the confined app while <code>secpolmonitor</code> logs every refusal.</p></div>
+      <div class="step"><h3>Enforce</h3><p><code>secpolcompile</code> checks it, then QNX reboots with it enforced (<code>--secpol=secure</code>).</p></div>
+      <div class="step"><h3>Attack</h3><p>The workload runs again, then an injected exploit. The kernel refuses what the app never needed.</p></div>
     </div>
   </section>
 
@@ -89,7 +89,7 @@ tether tighten observed.secpol --type telemetry_t \
 <script>
 const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-const lines=[["m","$ tether run telemetryd --exploit exploit.sh"],["","observe   secpolgenerate: workload finished"],["","tighten   telemetry_t: grants kept, root abilities withheld"],["","enforce   secpolcompile + secpolpush"],["","attack    EXEC /bin/sh"],["bad","          denied by QNX security policy"],["ok","verdict   exploit blocked · report.html"]];
+const lines=[["m","$ tether run telemetryd --exploit exploit.sh"],["","observe   secpolgenerate: workload finished"],["","tighten   telemetry_t: grants kept, root abilities withheld"],["","enforce   secpolcompile, reboot --secpol=secure"],["","attack    EXEC /bin/sh"],["bad","          ERR exec /bin/sh: Operation not permitted"],["ok","verdict   exploit blocked · report.html"]];
 const tty=document.getElementById('tty');
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){tty.innerHTML=lines.map(([c,t])=>`<span class="${c}">${t}</span>`).join('\n')}
 else{let i=0,j=0;(function type(){if(i>=lines.length)return;const [c,t]=lines[i];j++;const done=lines.slice(0,i).map(([c,t])=>`<span class="${c}">${t}</span>`).join('\n');tty.innerHTML=(done?done+'\n':'')+`<span class="${c}">${t.slice(0,j)}</span>`;if(j>=t.length){i++;j=0;setTimeout(type,380)}else setTimeout(type,i===0?38:12)})()}

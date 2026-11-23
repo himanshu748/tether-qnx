@@ -1,0 +1,32 @@
+from tether.secpol import parse
+from tether.tighten import denied, extract, grants
+
+OBSERVED = parse("""
+type app_t, logd_t, other_t, sock_t;
+allow app_t self:ability { nonroot public_channel channel_connect:logd_t setuid:0- };
+allow app_t self:ability { prot_exec };
+allow app_t logd_t:channel connect;
+allow_attach app_t /dev/telemetry;
+allow other_t self:ability { io mem_phys };
+""")
+UNUSED = parse("allow app_t self:ability { prot_exec };")
+
+
+def test_extract_keeps_only_app_rules_and_referenced_types():
+    p = extract(OBSERVED, "app_t", UNUSED)
+    assert p.types == ["app_t", "logd_t"]
+    assert all(r.subject == "app_t" for r in p.rules)
+    assert "prot_exec" not in p.abilities_of("app_t")
+    assert "other_t" not in p.render()
+
+
+def test_grants_rank_unbounded_dangerous_first():
+    g = grants(extract(OBSERVED, "app_t"), "app_t")
+    assert (g[0].name, g[0].risk) == ("setuid", 3)
+    bounded = next(x for x in g if x.name == "channel_connect")
+    assert bounded.risk == 0
+
+
+def test_denied_lists_withheld_root_abilities():
+    p = extract(OBSERVED, "app_t")
+    assert denied(["spawn", "setuid", "io"], p, "app_t") == ["io", "spawn"]

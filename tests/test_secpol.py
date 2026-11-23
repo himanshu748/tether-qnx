@@ -41,3 +41,8 @@ def test_roundtrip_is_stable():
 def test_abilities_merge_across_rules():
     p = parse("allow a self:ability { setuid:1 };allow a self:ability { setuid:1,2 io };")
     assert p.abilities_of("a") == {"setuid": ["1", "2"], "io": []}
+
+
+def test_grouped_attach_expands():
+    pol = parse("allow_attach app_t { /dev/a /dev/b } dev_t;")
+    assert [(r.path, r.ftype) for r in pol.rules] == [("/dev/a", "dev_t"), ("/dev/b", "dev_t")]

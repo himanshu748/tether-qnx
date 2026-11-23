@@ -109,8 +109,14 @@ def parse(text: str) -> Policy:
         if s.startswith("type "):
             pol.types += [t.strip() for t in s[5:].split(",")]
         elif s.startswith("allow_attach "):
-            parts = s.split()
-            pol.rules.append(AttachRule(parts[1], parts[2], parts[3] if len(parts) > 3 else None))
+            head, _, rest = s[len("allow_attach "):].partition(" ")
+            if rest.lstrip().startswith("{"):
+                paths, _, tail = rest.lstrip()[1:].partition("}")
+                ftype = tail.split()[0] if tail.split() else None
+                pol.rules += [AttachRule(head, x, ftype) for x in paths.split()]
+            else:
+                parts = rest.split()
+                pol.rules.append(AttachRule(head, parts[0], parts[1] if len(parts) > 1 else None))
         elif (m := _ALLOW.match(s)) is not None:
             subject, target, klass, rest = m.groups()
             rest = rest.strip()

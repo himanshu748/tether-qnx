@@ -33,7 +33,7 @@ def test_denied_lists_withheld_root_abilities():
 
 
 def test_extract_subtracts_single_unused_grant_from_grouped_rule():
-    unused = parse("allow app_t self:ability { public_channel };")
+    unused = parse("allow app_t self:ability { nonroot public_channel };")
     p = extract(OBSERVED, "app_t", unused)
     held = p.abilities_of("app_t")
     assert "public_channel" not in held and {"setuid", "channel_connect"} <= set(held)

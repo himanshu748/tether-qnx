@@ -66,11 +66,13 @@ static void handle(char *line) {
 
 int main(void) {
     char line[1024];
-    mkdir(DATA_DIR, 0750);
-    if (mkfifo(FIFO_PATH, 0620) != 0 && errno != EEXIST) {
+    mkdir(DATA_DIR, 0755);
+    chmod(DATA_DIR, 0755);
+    if (mkfifo(FIFO_PATH, 0622) != 0 && errno != EEXIST) {
         perror("mkfifo");
         return 1;
     }
+    chmod(FIFO_PATH, 0622);
     append_log("telemetryd started");
     printf("telemetryd ready on %s\n", FIFO_PATH);
     fflush(stdout);

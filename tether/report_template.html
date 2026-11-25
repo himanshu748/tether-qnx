@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tether report</title>
+<style>
+:root{--bg:#07090d;--panel:#0f141c;--line:#1d2633;--ink:#e8eef6;--mute:#8492a6;--ok:#3ddc97;--bad:#ff5d73;--warn:#ffb547;--acc:#6aa8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#13233d 0,transparent 60%),var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:48px 24px 96px}
+h1{font-size:clamp(28px,4vw,44px);letter-spacing:-.02em;margin:.2em 0}h2{font-size:18px;margin:0 0 14px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.eyebrow{color:var(--acc);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:28px 0}
+.card{background:linear-gradient(180deg,#111824,#0c1119);border:1px solid var(--line);border-radius:16px;padding:20px;opacity:0;transform:translateY(12px);animation:rise .6s ease forwards}
+.card:nth-child(2){animation-delay:.08s}.card:nth-child(3){animation-delay:.16s}.card:nth-child(4){animation-delay:.24s}
+@keyframes rise{to{opacity:1;transform:none}}
+.big{font-size:34px;font-weight:700;letter-spacing:-.02em}.mute{color:var(--mute)}
+.verdict{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-weight:600;font-size:14px}
+.verdict.ok{background:#3ddc9722;color:var(--ok)}.verdict.bad{background:#ff5d7322;color:var(--bad)}
+section{margin-top:36px}
+table{width:100%;border-collapse:collapse}td,th{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mute);font-weight:600;font-size:13px}
+.risk{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}.risk i{position:absolute;inset:0 auto 0 0;border-radius:3px}
+pre{background:#05070a;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#cfe1ff;max-height:420px}
+.two{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:4px 10px;border:1px solid var(--line);border-radius:999px;font:12px ui-monospace,monospace;color:var(--mute)}
+.deny{color:var(--bad)}button{background:var(--acc);color:#04111f;border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer}
+@media (max-width:600px){main{padding:28px 16px 64px}.grid{grid-template-columns:1fr 1fr;gap:10px}.card{padding:14px}.big{font-size:26px}td,th{padding:8px 6px;font-size:13px}td:nth-child(2){word-break:break-all}.risk{width:40px}}
+@media (prefers-reduced-motion:reduce){.card{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Tether · least-privilege report</div>
+<h1 id="title"></h1>
+<p class="mute" id="sub"></p>
+<div class="grid">
+  <div class="card"><div class="mute">Verdict</div><div id="verdict" style="margin-top:8px"></div></div>
+  <div class="card"><div class="mute">Abilities granted</div><div class="big" id="nGrant"></div></div>
+  <div class="card"><div class="mute">Root abilities withheld</div><div class="big" id="nWithheld"></div></div>
+  <div class="card"><div class="mute">Denials on rerun</div><div class="big" id="nDeny"></div></div>
+</div>
+<section><h2>What the app was granted</h2><table><thead><tr><th>Kind</th><th>Name</th><th>Range / detail</th><th>Risk</th></tr></thead><tbody id="grants"></tbody></table></section>
+<section><h2>Withheld from a root process</h2><div class="chips" id="withheld"></div></section>
+<section class="two">
+  <div><h2>Observed run</h2><pre id="baseline"></pre></div>
+  <div><h2>Sandboxed rerun with exploit</h2><pre id="sandboxed"></pre></div>
+</section>
+<section><h2>Security failures reported by QNX</h2><pre id="denials"></pre></section>
+<section><h2>Generated policy <button id="copy">Copy</button></h2><pre id="policy"></pre></section>
+</main>
+<script type="application/json" id="run">__RUN_DATA__</script>
+<script>
+const r=JSON.parse(document.getElementById('run').textContent);const $=id=>document.getElementById(id);
+$('title').textContent=r.app+' as '+r.type_name;$('sub').textContent='Observed and enforced on '+r.image;
+const v=document.createElement('span');v.className='verdict '+(r.blocked?'ok':'bad');v.textContent=r.blocked?'Exploit blocked':'Exploit not blocked';$('verdict').append(v);
+$('nGrant').textContent=r.grants.filter(g=>g.kind==='ability').length;$('nWithheld').textContent=r.withheld.length;$('nDeny').textContent=r.denials.length;
+const col=['#3ddc97','#6aa8ff','#ffb547','#ff5d73'];
+for(const g of r.grants){const tr=document.createElement('tr');for(const t of [g.kind,g.name,g.detail]){const td=document.createElement('td');td.textContent=t;tr.append(td)}
+const td=document.createElement('td');td.innerHTML='<span class="risk"><i></i></span>';const i=td.querySelector('i');i.style.width=(25+25*g.risk)+'%';i.style.background=col[g.risk];tr.append(td);$('grants').append(tr)}
+for(const w of r.withheld){const c=document.createElement('span');c.className='chip';c.textContent=w;$('withheld').append(c)}
+$('baseline').textContent=r.baseline_log;$('sandboxed').textContent=r.sandboxed_log;$('denials').textContent=r.denials.join('\n')||'none';$('policy').textContent=r.policy;
+$('copy').onclick=()=>navigator.clipboard.writeText(r.policy);
+</script>
+</body>
+</html>

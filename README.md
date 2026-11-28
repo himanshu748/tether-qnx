@@ -13,9 +13,11 @@ boot --secpol=open   one type,      secpolcompile, reboot   workload   report.ht
 secpolgenerate       minus unused   --secpol=secure         + exploit  run.json
 ```
 
-A real run on QNX 8.0 (`runs/` is gitignored; the committed [web/report.html](web/report.html)
-is one): `telemetryd` keeps working under its generated policy, and the injected
-`EXEC /bin/sh` fails with `Operation not permitted` because `spawn` was never observed.
+[Open the archived QNX 8.0 report](https://tether-qnx.vercel.app/report.html).
+It records three granted abilities, 26 withheld entries from Tether's reference
+list, and one application-reported denial. The enforced log contains the same
+five normal-workload lines as the observed log. The archived run predates
+workload exit-code capture. See the [judge evidence and replay scope](docs/DEVPOST.md#evidence-of-the-qnx-connection).
 
 ## Use
 
@@ -35,7 +37,9 @@ tether tighten observed.secpol --type telemetry_t --unused unused.secpol \
   -o telemetry_t.secpol --json run.json          # --system for the whole bootable policy
 ```
 
-`tether run` exits 0 only when the exploit was refused. Your app needs a workload
+`tether run` exits 0 only when both workload scripts exit 0 and the run records
+a denial. Both workload exit codes and the recorded verification state are in
+`run.json`. Your app needs a workload
 script that drives its normal behaviour and an exploit script; anything the workload
 does not exercise is denied later, so make the workload complete.
 

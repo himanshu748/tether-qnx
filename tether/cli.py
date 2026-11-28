@@ -46,7 +46,7 @@ def cmd_run(a: argparse.Namespace) -> int:
     from .target import Target
     app = AppSpec(binary=a.binary, type_name=a.type, workload=a.workload, exploit=a.exploit)
     r = run(Vm(Path(a.image_dir)), Target(port=a.port), app, ROOT_ABILITIES, Path(a.out))
-    return 0 if r.blocked else 2
+    return 0 if r.verification == "denial-recorded" else 2
 
 
 def main(argv: list[str] | None = None) -> int:

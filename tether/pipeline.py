@@ -33,15 +33,18 @@ def _deploy(t: Target, app: AppSpec) -> dict[str, str]:
     return remote
 
 
-def _exercise(t: Target, app: AppSpec, remote: dict[str, str], scripts: list[str]) -> str:
+def _exercise(t: Target, app: AppSpec, remote: dict[str, str], scripts: list[str]) -> tuple[str, int | None]:
     t.run(f"{launch_cmd(remote['binary'], app.type_name, app.args)} "
           f"> {REMOTE_DIR}/app.out 2>&1 &")
     time.sleep(app.settle)
+    workload_exit = None
     for s in scripts:
-        t.run(f"sh {remote[s]}", check=False)
+        completed = t.run(f"sh {remote[s]}", check=False)
+        if s == "workload":
+            workload_exit = completed.returncode
     time.sleep(app.settle)
     t.run(f"slay -f {Path(remote['binary']).name}", check=False)
-    return t.cat(f"{REMOTE_DIR}/app.out")
+    return t.cat(f"{REMOTE_DIR}/app.out"), workload_exit
 
 
 def run(vm: Vm, t: Target, app: AppSpec, root_abilities: list[str], out_dir: Path,
@@ -51,7 +54,7 @@ def run(vm: Vm, t: Target, app: AppSpec, root_abilities: list[str], out_dir: Pat
     log("observe   building QNX image with secpolgenerate (--secpol=open)")
     vm.build("open")
     vm.boot(t)
-    baseline = _exercise(t, app, _deploy(t, app), ["workload"])
+    baseline, observed_exit = _exercise(t, app, _deploy(t, app), ["workload"])
     observed, unused = t.cat(POLICY_DEV), t.cat(UNUSED_DEV)
     (out_dir / "observed.secpol").write_text(observed)
     (out_dir / "observe-errors.txt").write_text(t.cat(ERRORS_DEV))
@@ -73,15 +76,16 @@ def run(vm: Vm, t: Target, app: AppSpec, root_abilities: list[str], out_dir: Pat
     vm.build("secure", str(system))
     vm.boot(t)
     log("attack    rerunning workload, then the exploit")
-    sandboxed = _exercise(t, app, _deploy(t, app), ["workload", "exploit"])
+    sandboxed, enforced_exit = _exercise(t, app, _deploy(t, app), ["workload", "exploit"])
     vm.stop()
 
     denials = [ln for ln in sandboxed.splitlines() if "not permitted" in ln]
     result = Run(app=Path(app.binary).name, type_name=app.type_name, policy=text,
                  grants=grants(pol, app.type_name), withheld=denied(root_abilities, pol, app.type_name),
                  baseline_log=baseline, sandboxed_log=sandboxed, denials=denials,
-                 blocked="OK exec" not in sandboxed and bool(denials))
+                 blocked="OK exec" not in sandboxed and bool(denials),
+                 observed_workload_exit=observed_exit, enforced_workload_exit=enforced_exit)
     (out_dir / "run.json").write_text(result.to_json())
     (out_dir / "report.html").write_text(render(result))
-    log(f"verdict   {'exploit blocked' if result.blocked else 'exploit NOT blocked'} · {out_dir / 'report.html'}")
+    log(f"verdict   {result.verification} · {out_dir / 'report.html'}")
     return result

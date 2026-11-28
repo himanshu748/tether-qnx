@@ -22,10 +22,21 @@ class Run:
     sandboxed_log: str = ""
     denials: list[str] = field(default_factory=list)
     blocked: bool = False
+    observed_workload_exit: int | None = None
+    enforced_workload_exit: int | None = None
+
+    @property
+    def verification(self) -> str:
+        exits = (self.observed_workload_exit, self.enforced_workload_exit)
+        if any(code is not None and code != 0 for code in exits):
+            return "workload-failed"
+        if None in exits:
+            return "workload-unrecorded"
+        return "denial-recorded" if self.blocked else "denial-unconfirmed"
 
     def to_json(self) -> str:
         d = asdict(self)
-        d["grants"] = [asdict(g) if not isinstance(g, dict) else g for g in self.grants]
+        d["verification"] = self.verification
         return json.dumps(d, indent=2)
 
 

@@ -1,12 +1,15 @@
-# Tether — Devpost submission draft
+# Tether Devpost submission draft
 
-**Tagline:** Least-privilege QNX security policies, written from what your app actually does — then proven against a live exploit.
+**Tagline** Turn an observed QNX workload into a reviewable, least-privilege policy and check normal behavior on a secure QNX boot.
 
-**Category:** Developer Tooling & Host Tools
+**Category** Developer Tooling & Host Tools
 
 ## Inspiration
 
-QNX ships one of the few mainstream capability-based security models in embedded systems — yet almost nobody writes secpolicies, because writing one by hand means enumerating every ability, channel and path attachment your process needs. We wanted the policy to write itself: watch what the application really does, and deny everything else.
+Embedded teams have to keep process abilities, channel connections, and path
+attachments aligned with their applications as they change. Tether gives a
+QNX developer a reviewable starting point based on the normal workload they
+actually exercised.
 
 ## What it does
 
@@ -19,31 +22,49 @@ observe ──► tighten ──► enforce ──► attack ──► report
 1. **Observe:** boots QNX 8.0 in QEMU with `--secpol=open` and runs your app under `secpolgenerate`, recording the abilities, channels and path attachments it really uses.
 2. **Tighten:** computes a least-privilege policy for that one type — everything unobserved is removed.
 3. **Enforce:** recompiles the policy (`secpolcompile`) and reboots QNX with `--secpol=secure`.
-4. **Attack:** reruns the app's normal workload — it must keep working — and then runs an injected exploit.
-5. **Report:** writes `report.html` and `run.json` showing exactly what QNX refused. `tether run` exits 0 only when the exploit was refused.
+4. **Verify** reruns the app's normal workload under the policy and captures
+   the application output.
+5. **Report** writes `report.html` and `run.json`. A passing run requires
+   a zero workload exit code in both boots and a recorded denial.
 
-On the committed demo run: `telemetryd` keeps working under its generated policy, while the injected `EXEC /bin/sh` fails with `Operation not permitted` — because `spawn` was never observed during normal behaviour.
+The [archived report](https://tether-qnx.vercel.app/report.html) shows
+`telemetryd` with three granted abilities and one recorded denial. Five
+normal-workload lines appear in both output logs. The archived run predates
+exit-code capture.
 
 ## How we built it
 
-Python host CLI (parser, tightening engine, runner, report generator) driving QEMU over ssh with the QNX SDP 8.0 toolchain. The demo target is a small C daemon built with `qcc`. The pipeline is the product: point it at your own app with a workload script and an exploit script.
+The Python CLI drives an x86-64 QEMU target over SSH. The QNX SDP 8.0
+toolchain builds the demo service with `qcc`. The host can also narrow a
+previously exported policy offline.
 
 ## Evidence of the QNX connection
 
-Everything in the pipeline is QNX-specific: `secpolgenerate`/`secpolcompile` are QNX 8.0 security-policy tools, the policy language is QNX's type/ability model, boot flags are QNX image options, and the attack proof is QNX's own refusal (`EPERM` on disallowed abilities). Unit-tested parser/CLI/report on the host; the on-target pipeline requires a QNX SDP host — this is disclosed plainly in the repository, including what has and has not been executed on target.
+Tether reads QNX 8.0 `secpolgenerate` output, narrows rules for a chosen
+process type, compiles the policy with `secpolcompile`, and builds a secure
+QNX image. The [build and run guide](../README.md#use) names the target and
+toolchain.
+
+The hosted report renders the captured logs from the repository. Host tests
+cover the result and exit-code logic. A fresh QNX boot with the updated
+verdict still needs to be recorded.
 
 ## Challenges
 
-- secpolgenerate output is unstructured and version-specific — the parser had to be written against real observed output, not documentation.
+- The parser has to preserve the parts of the emitted policy that remain
+  relevant to the narrowed application type.
 - Anything the workload doesn't exercise is denied later: designing workloads that cover legitimate behaviour is the real usability problem of least-privilege, and Tether surfaces it instead of hiding it.
 
 ## Accomplishments
 
-The honest end-to-end shape: not "we generated a policy" but "we enforced it, reran the workload, attacked it, and show you the refusal." Most security-tooling demos stop at generation.
+The report puts the generated policy, normal-workload evidence and recorded
+denials next to each other, so a reviewer can trace the effect of narrowing
+the application's abilities.
 
 ## What's next
 
-Running the full pipeline on a QNX SDP host (the repository documents exactly what remains unverified), multi-type policies, and CI integration so a policy diff is reviewable like code.
+Record an updated QNX run with both workload exit codes. Multi-type policies
+and automated review of generated policy diffs are future work.
 
 ## Built with
 
@@ -52,5 +73,14 @@ Running the full pipeline on a QNX SDP host (the repository documents exactly wh
 ## Links
 
 - Repository: https://github.com/himanshu748/tether-qnx
-- Report sample: https://github.com/himanshu748/tether-qnx/blob/main/web/report.html
-- Video: `YOUTUBE_URL_HERE`
+- Rendered report: https://tether-qnx.vercel.app/report.html
+- Public YouTube walkthrough: pending
+
+## Video shot list
+
+| Time | Show |
+| --- | --- |
+| 0:00–0:20 | Developer selects an application type and a normal workload. |
+| 0:20–1:00 | QNX SDP 8.0 and the x86-64 guest, with the observe and policy compilation stages visible. |
+| 1:00–1:45 | Secure boot and the normal workload result. Keep both exit codes legible. |
+| 1:45–2:25 | Open the generated report. Show the granted abilities, the recorded denial and the scope of the workload used. |

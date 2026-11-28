@@ -49,6 +49,10 @@ The hosted report renders the captured logs from the repository. Host tests
 cover the result and exit-code logic. A fresh QNX boot with the updated
 verdict still needs to be recorded.
 
+The [offline policy diff](../README.md#try-the-policy-diff-offline) gives
+reviewers a runnable synthetic input for the narrowing stage on Python 3.10
+or newer.
+
 ## Challenges
 
 - The parser has to preserve the parts of the emitted policy that remain

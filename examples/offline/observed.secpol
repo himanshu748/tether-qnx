@@ -1,0 +1,6 @@
+# Synthetic excerpt for the offline policy diff in the README.
+type sensor_t, logger_t, maintenance_t;
+allow sensor_t self:ability { nonroot spawn };
+allow sensor_t logger_t:channel connect;
+allow_attach sensor_t /dev/sensor;
+allow maintenance_t self:ability { nonroot spawn };

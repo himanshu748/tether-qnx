@@ -19,6 +19,24 @@ list, and one application-reported denial. The enforced log contains the same
 five normal-workload lines as the observed log. The archived run predates
 workload exit-code capture. See the [judge evidence and replay scope](docs/DEVPOST.md#evidence-of-the-qnx-connection).
 
+## Try the policy diff offline
+
+Clone the repository and run the following from its root with Python 3.10 or
+newer. The included synthetic policy excerpts let you run the same narrowing
+code used by the host tool without an SDK, VM, or account.
+
+```sh
+python -m tether.cli tighten examples/offline/observed.secpol \
+  --type sensor_t --unused examples/offline/unused.secpol \
+  --json tether-offline.json
+```
+
+The output keeps `sensor_t`'s connection to `logger_t` and its `/dev/sensor`
+attachment. It drops the unused `spawn` ability and omits the unrelated
+`maintenance_t` rule. The JSON lists what the narrowed policy grants and
+withholds. The [archived QNX report](https://tether-qnx.vercel.app/report.html)
+contains the separate target-run evidence.
+
 ## Use
 
 Needs QNX SDP 8.0 (free non-commercial licence), `qemu-system-x86_64`, and an ssh key.

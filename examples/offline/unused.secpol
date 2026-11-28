@@ -1,0 +1,2 @@
+# The example workload left this grant unused.
+allow sensor_t self:ability { nonroot spawn };

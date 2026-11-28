@@ -17,7 +17,11 @@ secpolgenerate       minus unused   --secpol=secure         + exploit  run.json
 It records three granted abilities, 26 withheld entries from Tether's reference
 list, and one application-reported denial. The enforced log contains the same
 five normal-workload lines as the observed log. The archived run predates
-workload exit-code capture. See the [judge evidence and replay scope](docs/DEVPOST.md#evidence-of-the-qnx-connection).
+workload exit-code capture. The report is self-contained. The
+[evidence landing page](https://tether-qnx.vercel.app/) offers a download
+for offline inspection. See the [judge evidence and replay scope](docs/DEVPOST.md#judge-evidence).
+The [Devpost project](https://devpost.com/software/tether-rnav8q) is a draft
+awaiting a native recording and submission.
 
 ## Try the policy diff offline
 

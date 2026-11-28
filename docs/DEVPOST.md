@@ -65,8 +65,8 @@ or newer.
 | [Offline policy diff](../README.md#try-the-policy-diff-offline) | A repeatable policy narrowing step and the exported grants and withheld list. | Host execution with synthetic policy inputs. |
 | [QNX build guide](../README.md#use) | Where to build and run against the QNX 8.0 x86-64 target. | Requires a QNX SDP 8.0 and QEMU host. |
 
-Use **Download archived report** on the [evidence landing page](https://tether-qnx.vercel.app/)
-to inspect the same self-contained HTML without a network connection.
+Open the [archived report](https://tether-qnx.vercel.app/report.html) and use
+the browser's **Save page as** command to keep the self-contained HTML offline.
 
 ## Challenges
 

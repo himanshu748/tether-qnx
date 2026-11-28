@@ -57,6 +57,17 @@ The [offline policy diff](../README.md#try-the-policy-diff-offline) gives
 reviewers a runnable synthetic input for the narrowing stage on Python 3.10
 or newer.
 
+## Judge evidence
+
+| Path | What it verifies | Scope |
+| --- | --- | --- |
+| [Archived QNX report](https://tether-qnx.vercel.app/report.html) | The recorded grants, withheld reference-list entries and application-reported denial. | Historical target output. The five normal output lines appear in both logs. Both workload exit codes are unavailable. |
+| [Offline policy diff](../README.md#try-the-policy-diff-offline) | A repeatable policy narrowing step and the exported grants and withheld list. | Host execution with synthetic policy inputs. |
+| [QNX build guide](../README.md#use) | Where to build and run against the QNX 8.0 x86-64 target. | Requires a QNX SDP 8.0 and QEMU host. |
+
+Open the [archived report](https://tether-qnx.vercel.app/report.html) and use
+the browser's **Save page as** command to keep the self-contained HTML offline.
+
 ## Challenges
 
 - The parser has to preserve the parts of the emitted policy that remain
@@ -82,7 +93,8 @@ and automated review of generated policy diffs are future work.
 
 - Repository: https://github.com/himanshu748/tether-qnx
 - Rendered report: https://tether-qnx.vercel.app/report.html
-- Public YouTube walkthrough: pending
+- Devpost project: https://devpost.com/software/tether-rnav8q (draft)
+- Public YouTube walkthrough: pending native recording and upload
 
 ## Video shot list
 

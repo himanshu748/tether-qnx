@@ -5,7 +5,7 @@
 <script>document.documentElement.classList.add("js")</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tether: least-privilege QNX security policies</title>
-<meta name="description" content="Tether watches your app on QNX OS 8.0, writes the smallest security policy it needs, and proves it by blocking an exploit.">
+<meta name="description" content="Tether records a normal QNX 8.0 workload, generates a reviewable least-privilege policy, and compares workload results on a secure boot.">
 <style>
 :root{--bg:#07090d;--panel:#0f141c;--line:#1d2633;--ink:#e8eef6;--mute:#8492a6;--ok:#3ddc97;--bad:#ff5d73;--acc:#6aa8ff}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -58,7 +58,7 @@ footer{padding:12vh 24px 48px;color:var(--mute);font-size:14px;display:flex;just
     <div class="eyebrow">QNX OS 8.0 · Developer tooling</div>
     <h1>Give every QNX process <em>only what it uses.</em></h1>
     <p class="lede">Tether records the abilities, channels and paths a QNX workload uses, writes a reviewable policy, and checks the workload again on a secure boot.</p>
-    <div class="cta"><a class="btn p" href="report.html">Open the archived QNX report</a><a class="btn s" href="https://github.com/himanshu748/tether-qnx#use">Try the CLI</a></div>
+    <div class="cta"><a class="btn p" href="report.html">Open the archived QNX report</a><a class="btn s" href="https://github.com/himanshu748/tether-qnx#try-the-policy-diff-offline">Try the offline policy diff</a></div>
   </div>
   <div class="term reveal"><div class="bar"><b></b><b></b><b></b></div><pre>Archived QNX 8.0 run
 <span>Application</span>              telemetryd
@@ -84,10 +84,11 @@ footer{padding:12vh 24px 48px;color:var(--mute);font-size:14px;display:flex;just
       <li>Running as root hands an exploited bug the whole machine.</li>
       <li>Tether turns one recorded run into a reviewable, diffable policy file.</li>
     </ul></div>
-    <div class="panel"><h3>Use it</h3><pre>pip install git+https://github.com/himanshu748/tether-qnx
-tether tighten observed.secpol --type telemetry_t \
-  --unused unused.secpol -o telemetry_t.secpol \
-  --json run.json</pre></div>
+    <div class="panel"><h3>Try it on your machine</h3><pre>git clone https://github.com/himanshu748/tether-qnx
+cd tether-qnx
+python -m tether.cli tighten examples/offline/observed.secpol \
+  --type sensor_t --unused examples/offline/unused.secpol \
+  --json tether-offline.json</pre></div>
   </section>
 </main>
 <footer><span>Tether · Apache-2.0</span><span>Built for the QNX Global Hackathon 2026</span></footer>

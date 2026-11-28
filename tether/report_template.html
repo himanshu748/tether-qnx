@@ -33,6 +33,7 @@ pre{background:#05070a;border:1px solid var(--line);border-radius:12px;padding:1
 <div class="eyebrow">Tether · least-privilege report</div>
 <h1 id="title"></h1>
 <p class="mute" id="sub"></p>
+<p class="mute" id="workload-status"></p>
 <div class="grid">
   <div class="card"><div class="mute">Verdict</div><div id="verdict" style="margin-top:8px"></div></div>
   <div class="card"><div class="mute">Abilities granted</div><div class="big" id="nGrant"></div></div>
@@ -45,14 +46,23 @@ pre{background:#05070a;border:1px solid var(--line);border-radius:12px;padding:1
   <div><h2>Observed run</h2><pre id="baseline"></pre></div>
   <div><h2>Sandboxed rerun with exploit</h2><pre id="sandboxed"></pre></div>
 </section>
-<section><h2>Security failures reported by QNX</h2><pre id="denials"></pre></section>
+<section><h2>Denials in the application log</h2><pre id="denials"></pre></section>
 <section><h2>Generated policy <button id="copy">Copy</button></h2><pre id="policy"></pre></section>
 </main>
 <script type="application/json" id="run">__RUN_DATA__</script>
 <script>
 const r=JSON.parse(document.getElementById('run').textContent);const $=id=>document.getElementById(id);
 $('title').textContent=r.app+' as '+r.type_name;$('sub').textContent='Observed and enforced on '+r.image;
-const v=document.createElement('span');v.className='verdict '+(r.blocked?'ok':'bad');v.textContent=r.blocked?'Exploit blocked':'Exploit not blocked';$('verdict').append(v);
+const outcomes={
+  'denial-recorded':'Workload passed; denial recorded',
+  'denial-unconfirmed':'Denial not confirmed',
+  'workload-failed':'Workload failed',
+  'workload-unrecorded':'Workload exit status unavailable'
+};
+const v=document.createElement('span');v.className='verdict '+(r.verification==='denial-recorded'?'ok':'bad');
+v.textContent=outcomes[r.verification] || outcomes['workload-unrecorded'];$('verdict').append(v);
+const exitLabel=value=>Number.isInteger(value)?String(value):'unavailable';
+$('workload-status').textContent='Workload exit codes: observed '+exitLabel(r.observed_workload_exit)+', enforced '+exitLabel(r.enforced_workload_exit)+'.';
 $('nGrant').textContent=r.grants.filter(g=>g.kind==='ability').length;$('nWithheld').textContent=r.withheld.length;$('nDeny').textContent=r.denials.length;
 const col=['#3ddc97','#6aa8ff','#ffb547','#ff5d73'];
 for(const g of r.grants){const tr=document.createElement('tr');for(const t of [g.kind,g.name,g.detail]){const td=document.createElement('td');td.textContent=t;tr.append(td)}

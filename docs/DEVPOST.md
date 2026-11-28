@@ -16,7 +16,7 @@ actually exercised.
 Tether is a host-based pipeline for QNX 8.0 targets:
 
 ```
-observe ──► tighten ──► enforce ──► attack ──► report
+observe ──► tighten ──► enforce ──► verify ──► report
 ```
 
 1. **Observe:** boots QNX 8.0 in QEMU with `--secpol=open` and runs your app under `secpolgenerate`, recording the abilities, channels and path attachments it really uses.
@@ -28,9 +28,10 @@ observe ──► tighten ──► enforce ──► attack ──► report
    a zero workload exit code in both boots and a recorded denial.
 
 The [archived report](https://tether-qnx.vercel.app/report.html) shows
-`telemetryd` with three granted abilities and one recorded denial. Five
-normal-workload lines appear in both output logs. The archived run predates
-exit-code capture.
+`telemetryd` with three granted abilities, 26 entries withheld from Tether's
+reference list, and one application-reported denial. Five normal-workload
+lines match across the two output logs. The archive predates workload exit-code
+capture, so the report shows both exit codes as unavailable.
 
 ## How we built it
 
@@ -45,9 +46,12 @@ process type, compiles the policy with `secpolcompile`, and builds a secure
 QNX image. The [build and run guide](../README.md#use) names the target and
 toolchain.
 
-The hosted report renders the captured logs from the repository. Host tests
-cover the result and exit-code logic. A fresh QNX boot with the updated
-verdict still needs to be recorded.
+The original logs are embedded in the HTML report in [the first commit that
+added it](https://github.com/himanshu748/tether-qnx/blob/ca7184824a91c21bbf17c8104f8cf6885289fb2f/web/report.html).
+The current archive keeps the original policy, grants, withheld entries, output
+logs, and recorded denial. It adds verification metadata for the unrecorded
+exit codes. Host tests cover the verdict logic. A fresh QNX run with that
+metadata still needs to be recorded.
 
 The [offline policy diff](../README.md#try-the-policy-diff-offline) gives
 reviewers a runnable synthetic input for the narrowing stage on Python 3.10
@@ -87,4 +91,4 @@ and automated review of generated policy diffs are future work.
 | 0:00–0:20 | Developer selects an application type and a normal workload. |
 | 0:20–1:00 | QNX SDP 8.0 and the x86-64 guest, with the observe and policy compilation stages visible. |
 | 1:00–1:45 | Secure boot and the normal workload result. Keep both exit codes legible. |
-| 1:45–2:25 | Open the generated report. Show the granted abilities, the recorded denial and the scope of the workload used. |
+| 1:45–2:25 | Show the report's grants and the scope of the workload. Label any historical logs or metrics as archived. |
